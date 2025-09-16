@@ -1,6 +1,7 @@
 package org.example.iw_payment_service.model;
 
 import lombok.Data;
+import org.example.iw_payment_service.model.enums.PaymentStatus;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -17,9 +18,9 @@ public class Payment {
 
     private Long userId;
 
-    private String status;
+    private PaymentStatus status;
 
-    private LocalDateTime timestamp;
+    private  LocalDateTime timestamp;
 
     private Double paymentAmount;
 
