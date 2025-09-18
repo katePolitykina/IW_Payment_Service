@@ -5,6 +5,23 @@ spring:
     mongodb:
       database: ${MONGO_INITDB_DATABASE}
       uri: ${MONGO_URI}
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: payment-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "org.example.iw_payment_service.dto,org.example.iw_order_service.dto"
+        spring.json.value.default.type: org.example.iw_payment_service.dto.PaymentRequest
+        spring.json.use.type.headers: false
 
+    listener:
+      ack-mode: manual
 server:
   port: 8081
