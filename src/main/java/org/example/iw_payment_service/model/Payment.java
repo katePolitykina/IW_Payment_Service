@@ -5,6 +5,7 @@ import org.example.iw_payment_service.model.enums.PaymentStatus;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Document(collection = "payments")
@@ -22,6 +23,6 @@ public class Payment {
 
     private  LocalDateTime timestamp;
 
-    private Double paymentAmount;
+    private BigDecimal paymentAmount;
 
 }

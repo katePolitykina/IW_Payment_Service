@@ -3,9 +3,8 @@ package org.example.iw_payment_service.dto;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
-import org.example.iw_payment_service.model.enums.PaymentStatus;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Data
 public class PaymentRequest {
@@ -15,6 +14,6 @@ public class PaymentRequest {
     private Long userId;
     @NotNull
     @Positive
-    private Double paymentAmount;
+    private BigDecimal paymentAmount;
 
 }

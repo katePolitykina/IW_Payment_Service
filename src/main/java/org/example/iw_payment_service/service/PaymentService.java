@@ -7,6 +7,7 @@ import org.example.iw_payment_service.mapper.PaymentMapper;
 import org.example.iw_payment_service.model.Payment;
 import org.example.iw_payment_service.model.enums.PaymentStatus;
 import org.example.iw_payment_service.repository.PaymentRepository;
+import org.example.iw_payment_service.service.kafka.PaymentEventProducer;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,12 +21,14 @@ public class PaymentService {
     private final PaymentRepository repository;
     private final PaymentMapper mapper;
     private final RestTemplate restTemplate;
+    private final PaymentEventProducer paymentEventProducer;
 
-    public PaymentResponse createPayment(PaymentRequest dto) {
-        Integer randomNumber = restTemplate.getForObject(
+    public void processPayment(PaymentRequest dto) {
+        String response = restTemplate.getForObject(
                 "https://www.random.org/integers/?num=1&min=1&max=100&col=1&base=10&format=plain&rnd=new",
-                Integer.class
+                String.class
         );
+        Integer randomNumber = Integer.valueOf(response.trim());
 
         Payment payment = mapper.toEntity(dto);
 
@@ -33,7 +36,7 @@ public class PaymentService {
         payment.setTimestamp(LocalDateTime.now());
 
         Payment saved = repository.save(payment);
-        return mapper.toDTO(saved);
+        paymentEventProducer.sendCreatePaymentEvent(mapper.toDTO(saved));
     }
 
     public List<PaymentResponse> getPaymentsByUserId(Long userId) {
