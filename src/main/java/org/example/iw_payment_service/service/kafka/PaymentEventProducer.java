@@ -1,6 +1,6 @@
 package org.example.iw_payment_service.service.kafka;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.example.iw_payment_service.dto.PaymentResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,15 +11,14 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PaymentEventProducer {
+
 
     private static final Logger logger = LoggerFactory.getLogger(PaymentEventProducer.class);
     private static final String TOPIC = "create-payment-topic";
 
     private final KafkaTemplate<String, PaymentResponse> kafkaTemplate;
-
-
     public void sendCreatePaymentEvent(PaymentResponse event) {
         logger.info("Sending CREATE_PAYMENT event: {}", event);
 
@@ -36,4 +35,5 @@ public class PaymentEventProducer {
             }
         });
     }
+
 }

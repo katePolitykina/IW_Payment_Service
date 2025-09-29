@@ -1,6 +1,7 @@
 package org.example.iw_payment_service.service;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.iw_payment_service.dto.PaymentRequest;
 import org.example.iw_payment_service.dto.PaymentResponse;
 import org.example.iw_payment_service.mapper.PaymentMapper;
@@ -8,35 +9,45 @@ import org.example.iw_payment_service.model.Payment;
 import org.example.iw_payment_service.model.enums.PaymentStatus;
 import org.example.iw_payment_service.repository.PaymentRepository;
 import org.example.iw_payment_service.service.kafka.PaymentEventProducer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
     private final PaymentRepository repository;
     private final PaymentMapper mapper;
     private final RestTemplate restTemplate;
     private final PaymentEventProducer paymentEventProducer;
+    private String randomNumberApiUrl;
 
+    @Value("${random.server.url}")
+    public void setRandomNumberApiUrl(String randomNumberApiUrl) {
+        this.randomNumberApiUrl = randomNumberApiUrl;
+    }
+
+    @Transactional
     public void processPayment(PaymentRequest dto) {
-        String response = restTemplate.getForObject(
-                "https://www.random.org/integers/?num=1&min=1&max=100&col=1&base=10&format=plain&rnd=new",
-                String.class
-        );
-        Integer randomNumber = Integer.valueOf(response.trim());
-
         Payment payment = mapper.toEntity(dto);
-
-        payment.setStatus(randomNumber % 2 == 0 ? PaymentStatus.SUCCESS : PaymentStatus.FAILED);
+        try {
+            String response = restTemplate.getForObject(randomNumberApiUrl, String.class);
+            int randomNumber = Integer.parseInt(response.trim());
+            payment.setStatus(randomNumber % 2 == 0 ? PaymentStatus.SUCCESS : PaymentStatus.FAILED);
+        } catch (Exception ex) {
+            payment.setStatus(PaymentStatus.FAILED);
+            log.error("Error while calling external API for orderId={}: {}", dto.getOrderId(), ex.getMessage(), ex);
+        }
         payment.setTimestamp(LocalDateTime.now());
-
         Payment saved = repository.save(payment);
         paymentEventProducer.sendCreatePaymentEvent(mapper.toDTO(saved));
+
     }
 
     public List<PaymentResponse> getPaymentsByUserId(Long userId) {
