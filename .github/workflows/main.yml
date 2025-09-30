@@ -1,0 +1,89 @@
+name: IW_Payment_Service CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - CI/CD
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-analyze:
+    name: Build & SonarQube Analysis
+    environment: base
+    runs-on: ubuntu-latest
+    env:
+      MONGO_INITDB_DATABASE: ${{ secrets.MONGO_INITDB_DATABASE }}
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      KAFKA_BOOTSTRAP_SERVERS: ${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu'
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+          
+      - name: Build and analyze
+        run: ./gradlew clean test build sonar --info --no-daemon\
+        
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/test
+          
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/*.jar
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-analyze
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }} \
+            --build-arg MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }} \
+            --build-arg MONGO_INITDB_DATABASE=${{ secrets.MONGO_INITDB_DATABASE }} \
+            --build-arg MONGO_URI=${{ secrets.MONGO_URI }} \
+            --build-arg KAFKA_BOOTSTRAP_SERVERS=${{ secrets.KAFKA_BOOTSTRAP_SERVERS }} \
+            -t payment-service:${{ github.sha }} .
+            mkdir -p docker-image
+            docker save payment-service:${{ github.sha }} -o docker-image/payment-service.tar
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: payment-service-docker-image
+          path: docker-image/payment-service.tar
