@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mongo:
     image: mongo:6.0
@@ -37,6 +35,21 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - iw_kafka_net
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iw-payment-service
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    ports:
+      - "8083:8080"
     networks:
       - iw_kafka_net
 

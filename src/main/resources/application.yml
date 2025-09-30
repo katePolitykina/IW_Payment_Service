@@ -6,7 +6,7 @@ spring:
       database: ${MONGO_INITDB_DATABASE}
       uri: ${MONGO_URI}
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -20,9 +20,6 @@ spring:
         spring.json.trusted.packages: "org.example.iw_payment_service.dto,org.example.iw_order_service.dto"
         spring.json.value.default.type: org.example.iw_payment_service.dto.PaymentRequest
         spring.json.use.type.headers: false
-
-    listener:
-      ack-mode: manual
 random:
   server:
     url: "https://www.random.org/integers/?num=1&min=1&max=100&col=1&base=10&format=plain&rnd=new"

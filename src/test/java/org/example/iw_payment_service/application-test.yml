@@ -20,8 +20,7 @@ spring:
         spring.json.use.type.headers: false
     topics:
       create-payment: create-payment-topic
-    listener:
-      ack-mode: manual
+
 random:
   server:
     url: "https://www.random.org/integers/?num=1&min=1&max=100&col=1&base=10&format=plain&rnd=new"
