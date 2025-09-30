@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: IW_Payment_Service_Test
+  data:
+    mongodb:
+      database: testdb
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: payment-service-test-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "org.example.iw_payment_service.dto"
+        spring.json.value.default.type: org.example.iw_payment_service.dto.PaymentRequest
+        spring.json.use.type.headers: false
+    topics:
+      create-payment: create-payment-topic
+    listener:
+      ack-mode: manual
+random:
+  server:
+    url: "https://www.random.org/integers/?num=1&min=1&max=100&col=1&base=10&format=plain&rnd=new"
+
+logging:
+  level:
+    org.example.iw_payment_service: DEBUG
+    org.springframework.kafka: INFO
+    org.testcontainers: INFO
+    org.springframework.kafka.listener: DEBUG
