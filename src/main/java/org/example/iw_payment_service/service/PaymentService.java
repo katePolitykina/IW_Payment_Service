@@ -26,12 +26,10 @@ public class PaymentService {
     private final PaymentMapper mapper;
     private final RestTemplate restTemplate;
     private final PaymentEventProducer paymentEventProducer;
-    private String randomNumberApiUrl;
+    @Value("${external.random-api.url}")
+    private  String randomNumberApiUrl;
 
-    @Value("${random.server.url}")
-    public void setRandomNumberApiUrl(String randomNumberApiUrl) {
-        this.randomNumberApiUrl = randomNumberApiUrl;
-    }
+
 
     @Transactional
     public void processPayment(PaymentRequest dto) {
@@ -40,6 +38,8 @@ public class PaymentService {
             String response = restTemplate.getForObject(randomNumberApiUrl, String.class);
             int randomNumber = Integer.parseInt(response.trim());
             payment.setStatus(randomNumber % 2 == 0 ? PaymentStatus.SUCCESS : PaymentStatus.FAILED);
+            log.info("returned random number: {} for orderId={}", randomNumber, dto.getOrderId());
+
         } catch (Exception ex) {
             payment.setStatus(PaymentStatus.FAILED);
             log.error("Error while calling external API for orderId={}: {}", dto.getOrderId(), ex.getMessage(), ex);
